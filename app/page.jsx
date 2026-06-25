@@ -21,8 +21,38 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [series, setSeries] = useState([]);
   const finRef = useRef(null);
+  const [escuchando, setEscuchando] = useState(false);
+  const [vozOk, setVozOk] = useState(false);
+  const recRef = useRef(null);
 
   useEffect(() => { finRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+
+  // Dictado por voz (Web Speech API del navegador)
+  useEffect(() => {
+    const SR = typeof window !== "undefined" && (window.SpeechRecognition || window.webkitSpeechRecognition);
+    if (!SR) return;
+    const rec = new SR();
+    rec.lang = "es-AR";
+    rec.continuous = false;
+    rec.interimResults = true;
+    rec.onresult = (e) => {
+      let txt = "";
+      for (let i = 0; i < e.results.length; i++) txt += e.results[i][0].transcript;
+      setInput(txt);
+    };
+    rec.onend = () => setEscuchando(false);
+    rec.onerror = () => setEscuchando(false);
+    recRef.current = rec;
+    setVozOk(true);
+  }, []);
+
+  function toggleVoz() {
+    const rec = recRef.current;
+    if (!rec) return;
+    if (escuchando) { rec.stop(); setEscuchando(false); return; }
+    setInput("");
+    try { rec.start(); setEscuchando(true); } catch { setEscuchando(false); }
+  }
 
   function pushMsg(m) { setMessages((prev) => [...prev, m]); }
 
@@ -137,7 +167,13 @@ export default function Home() {
           <div className="chat-input">
             <input value={input} onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && enviar()}
-              placeholder="Ej: el histórico del dólar oficial del último año…" />
+              placeholder={escuchando ? "Escuchando… hablá tu consulta" : "Escribí o dictá por voz tu consulta…"} />
+            {vozOk && (
+              <button className={`mic ${escuchando ? "rec" : ""}`} onClick={toggleVoz}
+                title={escuchando ? "Detener dictado" : "Dictar por voz"}>
+                {escuchando ? "● REC" : "🎤"}
+              </button>
+            )}
             <button className="btn" onClick={() => enviar()} disabled={loading}>Enviar</button>
           </div>
         </div>
