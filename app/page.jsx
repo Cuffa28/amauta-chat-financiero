@@ -23,35 +23,60 @@ export default function Home() {
   const finRef = useRef(null);
   const [escuchando, setEscuchando] = useState(false);
   const [vozOk, setVozOk] = useState(false);
+  const [vozMsg, setVozMsg] = useState("");
   const recRef = useRef(null);
 
   useEffect(() => { finRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
-  // Dictado por voz (Web Speech API del navegador)
+  // Detectar soporte de dictado por voz (Web Speech API)
   useEffect(() => {
     const SR = typeof window !== "undefined" && (window.SpeechRecognition || window.webkitSpeechRecognition);
-    if (!SR) return;
+    setVozOk(!!SR);
+  }, []);
+
+  async function toggleVoz() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { setVozMsg("Tu navegador no soporta dictado. Usá Chrome o Edge."); return; }
+    if (escuchando && recRef.current) { recRef.current.stop(); return; }
+
+    // Pedir permiso de micrófono explícitamente (mejor manejo de errores)
+    try {
+      if (navigator.mediaDevices?.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach((t) => t.stop());
+      }
+    } catch {
+      setVozMsg("🎤 Permiso de micrófono denegado. Tocá el candado 🔒 en la barra de direcciones → Micrófono → Permitir.");
+      return;
+    }
+
     const rec = new SR();
     rec.lang = "es-AR";
     rec.continuous = false;
     rec.interimResults = true;
+    rec.onstart = () => { setEscuchando(true); setVozMsg(""); };
     rec.onresult = (e) => {
       let txt = "";
       for (let i = 0; i < e.results.length; i++) txt += e.results[i][0].transcript;
       setInput(txt);
     };
+    rec.onerror = (e) => {
+      setEscuchando(false);
+      const msgs = {
+        "not-allowed": "🎤 Permiso de micrófono bloqueado. Habilitalo en el candado 🔒 de la barra de direcciones.",
+        "service-not-allowed": "🎤 El navegador bloqueó el servicio de voz.",
+        "no-speech": "No te escuché. Probá de nuevo y hablá un poco más fuerte.",
+        "audio-capture": "No se detectó micrófono conectado.",
+        "network": "Falló la red del servicio de dictado. Reintentá.",
+        "aborted": "",
+      };
+      const m = e.error in msgs ? msgs[e.error] : `Error de dictado: ${e.error}`;
+      if (m) setVozMsg(m);
+    };
     rec.onend = () => setEscuchando(false);
-    rec.onerror = () => setEscuchando(false);
     recRef.current = rec;
-    setVozOk(true);
-  }, []);
-
-  function toggleVoz() {
-    const rec = recRef.current;
-    if (!rec) return;
-    if (escuchando) { rec.stop(); setEscuchando(false); return; }
     setInput("");
-    try { rec.start(); setEscuchando(true); } catch { setEscuchando(false); }
+    try { rec.start(); } catch (err) { setVozMsg("No se pudo iniciar el dictado: " + err.message); }
   }
 
   function pushMsg(m) { setMessages((prev) => [...prev, m]); }
@@ -176,6 +201,7 @@ export default function Home() {
             )}
             <button className="btn" onClick={() => enviar()} disabled={loading}>Enviar</button>
           </div>
+          {vozMsg && <div className="voz-msg">{vozMsg}</div>}
         </div>
 
         {/* PANEL DE DATOS */}
