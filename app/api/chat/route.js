@@ -136,6 +136,7 @@ FUENTES (elegí la herramienta correcta):
 - Macro de EE.UU./global y tasas (PBI, tasa Fed, Treasuries, M2, petróleo) -> obtener_serie_fred (FRED, Reserva Federal).
 - Cuentas nacionales de EE.UU. (PBI, consumo, ingreso) del Bureau of Economic Analysis -> obtener_serie_bea. Si la serie existe en FRED, preferí FRED (más simple).
 - Macro y monetario de Argentina (reservas, dólar oficial/mayorista/minorista, base monetaria, inflación INDEC vía BCRA, tasa de política) -> obtener_serie_bcra (BCRA).
+- Liquidación de divisas del agro / exportaciones del complejo cerealero-oleaginoso (CIARA-CEC) -> ya está en la base como serie mensual en USD: usá buscar_serie con ric "CIARA-LIQ" y campo "USD".
 Si dudás entre BLS y FRED para EE.UU., cualquiera sirve; preferí FRED para tasas/PBI y BLS para empleo/CPI.
 Si el usuario no da fechas, usá el último año para Reuters y los últimos 5-10 años para fuentes macro (hoy es ${HOY}).
 

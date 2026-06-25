@@ -14,6 +14,7 @@ const FUENTES = {
   bls: { label: "BLS", color: "#1E8449" },
   fred: { label: "FRED", color: "#C0392B" },
   bea: { label: "BEA", color: "#5B2C6F" },
+  ciara: { label: "CIARA-CEC", color: "#7D6608" },
 };
 
 const nf = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2 });
@@ -25,6 +26,7 @@ function linkFuente(fuente, ric) {
   if (fuente === "bls") return `https://data.bls.gov/timeseries/${ric}`;
   if (fuente === "bcra") return `https://api.bcra.gob.ar/estadisticas/v4.0/monetarias/${ric.replace("BCRA-", "")}`;
   if (fuente === "bea") return "https://apps.bea.gov/iTable/?reqid=19&step=2&isuri=1&categories=survey";
+  if (fuente === "ciara") return "https://www.ciaracec.com.ar/ciara/Informaci%C3%B3n/Liquidaci%C3%B3n%20Mensual";
   return null; // reuters_eikon: dato del terminal, sin URL pública
 }
 
