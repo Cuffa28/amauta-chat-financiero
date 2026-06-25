@@ -45,8 +45,13 @@ export default function Home() {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         stream.getTracks().forEach((t) => t.stop());
       }
-    } catch {
-      setVozMsg("🎤 Permiso de micrófono denegado. Tocá el candado 🔒 en la barra de direcciones → Micrófono → Permitir.");
+    } catch (err) {
+      if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError")
+        setVozMsg("🎤 No hay micrófono conectado en esta PC. Conectá un micrófono o auricular con mic (o abrí la web desde el celular, que ya tiene micrófono).");
+      else if (err.name === "NotAllowedError" || err.name === "SecurityError")
+        setVozMsg("🎤 Permiso de micrófono bloqueado. Tocá el candado 🔒 en la barra de direcciones → Micrófono → Permitir.");
+      else
+        setVozMsg("🎤 No se pudo acceder al micrófono: " + err.name);
       return;
     }
 
