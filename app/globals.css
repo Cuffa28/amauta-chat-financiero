@@ -142,10 +142,11 @@ tbody tr:nth-child(even) { background: #fafafa; }
 .ss-ric { color: var(--gris-medio); font-weight: 400; font-size: 11px; }
 .ss-vals { font-size: 12px; color: var(--negro); margin-top: 3px; }
 .ss-acc { display: flex; gap: 4px; align-items: center; }
-.csv-mini, .quitar-mini { background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; width: 26px; height: 26px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; }
+.csv-mini, .quitar-mini, .link-mini { background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; width: 26px; height: 26px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
 .csv-mini { color: var(--bordo); }
 .quitar-mini { color: var(--rojo); }
-.csv-mini:hover { border-color: var(--bordo); } .quitar-mini:hover { border-color: var(--rojo); }
+.link-mini { color: var(--bordo); }
+.csv-mini:hover, .link-mini:hover { border-color: var(--bordo); } .quitar-mini:hover { border-color: var(--rojo); }
 .tabla-det { margin-top: 10px; }
 .tabla-det summary { cursor: pointer; font-size: 13px; color: var(--bordo); font-weight: 700; padding: 6px 0; }
 .limpiar { float: right; background: rgba(255,255,255,.15); border: none; color: #fff; border-radius: 6px; padding: 3px 10px; font-size: 12px; cursor: pointer; font-family: inherit; }

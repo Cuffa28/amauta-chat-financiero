@@ -19,6 +19,15 @@ const FUENTES = {
 const nf = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2 });
 const fmt = (n) => (n == null ? "—" : nf.format(n));
 
+// Link a la fuente oficial para verificar el dato (null = sin URL pública).
+function linkFuente(fuente, ric) {
+  if (fuente === "fred") return `https://fred.stlouisfed.org/series/${ric}`;
+  if (fuente === "bls") return `https://data.bls.gov/timeseries/${ric}`;
+  if (fuente === "bcra") return `https://api.bcra.gob.ar/estadisticas/v4.0/monetarias/${ric.replace("BCRA-", "")}`;
+  if (fuente === "bea") return "https://apps.bea.gov/iTable/?reqid=19&step=2&isuri=1&categories=survey";
+  return null; // reuters_eikon: dato del terminal, sin URL pública
+}
+
 function restarMeses(fechaStr, meses) {
   const d = new Date(fechaStr + "T00:00:00");
   d.setMonth(d.getMonth() - meses);
@@ -184,6 +193,8 @@ export default function Chart({ series, onRemove }) {
                 </div>
               </div>
               <div className="ss-acc">
+                {linkFuente(s.fuente, s.ric) &&
+                  <a className="link-mini" href={linkFuente(s.fuente, s.ric)} target="_blank" rel="noreferrer" title={`Verificar en ${fu.label}`}>🔗</a>}
                 <button className="csv-mini" onClick={() => descargarCSV(s)} title="Descargar CSV">⬇</button>
                 {onRemove && <button className="quitar-mini" onClick={() => onRemove(s.ric, s.campo)} title="Quitar serie">✕</button>}
               </div>
