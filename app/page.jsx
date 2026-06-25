@@ -90,9 +90,16 @@ export default function Home() {
     const { data: s } = await supabase.from("series").select("id,descripcion,fuente")
       .eq("ric", ric).eq("campo", campo).limit(1);
     if (!s || s.length === 0) return null;
-    const { data: obs } = await supabase.from("observaciones").select("fecha,valor")
-      .eq("serie_id", s[0].id).order("fecha").limit(5000);
-    if (!obs || obs.length === 0) return null;
+    let obs = [], desde = 0;
+    for (;;) {
+      const { data } = await supabase.from("observaciones").select("fecha,valor")
+        .eq("serie_id", s[0].id).order("fecha").range(desde, desde + 999);
+      if (!data || data.length === 0) break;
+      obs = obs.concat(data);
+      if (data.length < 1000) break;
+      desde += 1000;
+    }
+    if (obs.length === 0) return null;
     return { ric, campo, descripcion: s[0].descripcion, fuente: s[0].fuente, data: obs };
   }
 

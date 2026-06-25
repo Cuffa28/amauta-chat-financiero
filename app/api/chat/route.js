@@ -141,15 +141,27 @@ Si el usuario no da fechas, usá el último año para Reuters y los últimos 5-1
 
 ESTILO DE RESPUESTA (importante): respondé en español, de forma BREVE y conversacional (1 a 3 frases), tratando de "usted". El gráfico, la tabla y los datos se muestran automáticamente en el panel de al lado, así que NO armes tablas markdown ni listes los valores: solo comentá lo esencial (qué instrumento, último valor y la variación del período) en lenguaje natural. Si encolaste un pedido a Reuters, avisá que el gráfico aparecerá solo en unos segundos (NO digas "vuelva a consultar"). Podés cerrar ofreciendo comparar con otra serie o cambiar el período.`;
 
+// Lee TODAS las observaciones paginando (Supabase corta en 1000 filas por consulta).
+async function leerObservaciones(sb, serieId) {
+  let todas = [], desde = 0;
+  for (;;) {
+    const { data } = await sb.from("observaciones").select("fecha,valor")
+      .eq("serie_id", serieId).order("fecha").range(desde, desde + 999);
+    if (!data || data.length === 0) break;
+    todas = todas.concat(data);
+    if (data.length < 1000) break;
+    desde += 1000;
+  }
+  return todas;
+}
+
 async function buscarSerie(sb, ric, campo, seriesData) {
   const { data: serie } = await sb
     .from("series").select("id,descripcion,fuente")
     .eq("ric", ric).eq("campo", campo).limit(1);
   if (!serie || serie.length === 0) return `No hay datos de ${ric} (${campo}) en la base todavía.`;
 
-  const { data: obs } = await sb
-    .from("observaciones").select("fecha,valor")
-    .eq("serie_id", serie[0].id).order("fecha").limit(5000);
+  const obs = await leerObservaciones(sb, serie[0].id);
   if (!obs || obs.length === 0) return `La serie ${ric} existe pero no tiene observaciones.`;
 
   seriesData.push({ ric, campo, descripcion: serie[0].descripcion, fuente: serie[0].fuente, data: obs });
