@@ -163,19 +163,17 @@ export default function Home() {
     <>
       <nav className="navbar">
         <svg className="logo" viewBox="0 0 100 100" aria-label="Amauta">
-          <rect x="20" y="20" width="60" height="60" rx="6" transform="rotate(45 50 50)" fill="#F3CF11" />
-          <g stroke="#231F20" strokeWidth="2.4" strokeLinecap="round">
-            <line x1="50" y1="28" x2="50" y2="72" /><line x1="28" y1="50" x2="72" y2="50" />
-            <line x1="34" y1="34" x2="66" y2="66" /><line x1="66" y1="34" x2="34" y2="66" />
-            <line x1="50" y1="31" x2="50" y2="69" transform="rotate(22.5 50 50)" />
-            <line x1="50" y1="31" x2="50" y2="69" transform="rotate(67.5 50 50)" />
-            <line x1="50" y1="33" x2="50" y2="67" transform="rotate(112.5 50 50)" />
-            <line x1="50" y1="33" x2="50" y2="67" transform="rotate(157.5 50 50)" />
+          <polygon points="50,6 94,50 50,94 6,50" fill="#F3CF11" />
+          <g stroke="#231F20" strokeWidth="4.6" strokeLinecap="round">
+            <line x1="50" y1="26" x2="50" y2="74" />
+            <line x1="26" y1="50" x2="74" y2="50" />
+            <line x1="34.5" y1="34.5" x2="65.5" y2="65.5" />
+            <line x1="65.5" y1="34.5" x2="34.5" y2="65.5" />
           </g>
         </svg>
         <div className="brand">
-          <div className="titulo">AMAUTA <span className="titulo-sep">·</span> <span className="titulo-2">Chat Financiero</span></div>
-          <div className="sub">Series históricas de mercado y macro · Reuters · BCRA · BLS · FRED · BEA</div>
+          <div className="titulo">AMAUTA <span className="titulo-sep">·</span> <span className="titulo-2">Chat + Noticias</span></div>
+          <div className="sub">Series de mercado y macro + noticias de Argentina · Reuters · BCRA · BLS · FRED</div>
         </div>
       </nav>
 

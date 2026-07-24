@@ -8,8 +8,8 @@ const fira = Fira_Sans({
 });
 
 export const metadata = {
-  title: "Amauta | Chat Financiero",
-  description: "Series históricas de mercado desde Reuters para el equipo de Amauta Inversiones.",
+  title: "Amauta | Chat + Noticias",
+  description: "Series de mercado y macro + noticias de Argentina (Reuters) para el equipo de Amauta Inversiones.",
 };
 
 export default function RootLayout({ children }) {
