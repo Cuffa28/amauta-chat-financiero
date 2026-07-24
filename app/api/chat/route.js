@@ -115,6 +115,35 @@ const TOOLS = [
       required: ["id_variable"],
     },
   },
+  {
+    name: "buscar_noticias",
+    description:
+      "Busca titulares de noticias YA colectados por el worker de Amauta desde Reuters (NEWS MONITOR 2.0). " +
+      "Usala para noticias de Argentina y del mercado: política, economía, dólar, inflación, empresas, energía, agro, etc. " +
+      "Pasá palabras clave en 'query' (ej: 'YPF Vaca Muerta', 'inflación', 'dólar', 'cosecha', 'Milei'). " +
+      "IMPORTANTE: para noticias SÍ listá los titulares en tu respuesta (con fecha y fuente); no aplica la regla de brevedad de las series.",
+    input_schema: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "Palabras clave, ej 'YPF' o 'inflación'" },
+        limite: { type: "integer", description: "Máximo de titulares (default 8)" },
+      },
+      required: ["query"],
+    },
+  },
+  {
+    name: "solicitar_noticias",
+    description:
+      "Encola un pedido para que el worker local traiga titulares FRESCOS desde Reuters (NEWS MONITOR 2.0) " +
+      "para una palabra clave, cuando buscar_noticias no encontró nada reciente. Aparecen en unos segundos.",
+    input_schema: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "Palabras clave a monitorear en Reuters NEWS MONITOR 2.0" },
+      },
+      required: ["query"],
+    },
+  },
 ];
 
 const HOY = new Date().toISOString().slice(0, 10);
@@ -151,6 +180,7 @@ FUENTES (elegí la herramienta correcta):
 - Cuentas nacionales de EE.UU. (PBI, consumo, ingreso) del Bureau of Economic Analysis -> obtener_serie_bea. Si la serie existe en FRED, preferí FRED (más simple).
 - Macro y monetario de Argentina (reservas, dólar oficial/mayorista/minorista, base monetaria, inflación INDEC vía BCRA, tasa de política) -> obtener_serie_bcra (BCRA).
 - Liquidación de divisas del agro / exportaciones del complejo cerealero-oleaginoso (CIARA-CEC) -> ya está en la base como serie mensual en USD: usá buscar_serie con ric "CIARA-LIQ" y campo "USD".
+- NOTICIAS (titulares de Argentina, mercado, empresas, política, dólar, energía, agro) de Reuters NEWS MONITOR 2.0 -> buscar_noticias con palabras clave; si no hay nada reciente, ofrecé solicitar_noticias. EXCEPCIÓN al estilo breve: para noticias SÍ listá los titulares (con fuente y fecha), no los resumas en una sola frase.
 Si dudás entre BLS y FRED para EE.UU., cualquiera sirve; preferí FRED para tasas/PBI y BLS para empleo/CPI.
 Si el usuario no da fechas, usá el último año para Reuters y los últimos 5-10 años para fuentes macro (hoy es ${HOY}).
 
@@ -197,6 +227,44 @@ async function solicitarSerie(sb, input, solicitudes) {
   if (error) return `No se pudo encolar: ${error.message}`;
   solicitudes.push({ id: data.id, ric: input.ric, campo: input.campo || "CLOSE" });
   return `Pedido encolado para ${input.ric}. Se está bajando de Reuters y el gráfico aparecerá solo en el panel en unos segundos.`;
+}
+
+// ── Noticias (Reuters NEWS MONITOR 2.0, vía worker local) ────────────────────
+// Lee titulares que el worker guarda en la tabla `noticias`. Búsqueda por
+// palabra clave sobre titular/tema/keywords.
+async function buscarNoticias(sb, query, limite) {
+  const q = String(query || "").trim();
+  if (!q) return "Necesito una palabra clave para buscar noticias.";
+  const lim = Math.min(Math.max(Number(limite) || 8, 1), 20);
+  const like = `%${q}%`;
+  const { data, error } = await sb
+    .from("noticias")
+    .select("headline,source,published_at,url")
+    .or(`headline.ilike.${like},topic.ilike.${like},keywords.ilike.${like}`)
+    .order("published_at", { ascending: false })
+    .limit(lim);
+  if (error) return `No pude leer noticias: ${error.message}`;
+  if (!data || data.length === 0) {
+    return `SIN_RESULTADOS: no hay titulares guardados para "${q}". Ofrecé llamar solicitar_noticias para traerlos frescos de Reuters.`;
+  }
+  const fmt = (d) => {
+    try {
+      return d ? new Date(d).toLocaleDateString("es-AR") : "";
+    } catch {
+      return "";
+    }
+  };
+  return data
+    .map((n) => `• ${n.headline} — ${n.source || "Reuters"}${n.published_at ? ` (${fmt(n.published_at)})` : ""}`)
+    .join("\n");
+}
+
+async function solicitarNoticias(sb, query) {
+  const q = String(query || "").trim();
+  if (!q) return "Necesito una palabra clave para pedir noticias.";
+  const { error } = await sb.from("noticias_pedidos").insert({ query: q, estado: "pendiente" });
+  if (error) return `No pude encolar el pedido de noticias: ${error.message}`;
+  return `Pedido de noticias encolado para "${q}". El worker las trae de Reuters (NEWS MONITOR 2.0) y aparecen en unos segundos.`;
 }
 
 // Convierte año + período BLS (M01..M12 / Q01..Q04 / A01) a fecha YYYY-MM-01.
@@ -395,6 +463,18 @@ export async function POST(req) {
               out = await obtenerSerieBEA(sb, block.input, seriesData);
             } catch (e) {
               out = `Error consultando BEA: ${e.message}`;
+            }
+          } else if (block.name === "buscar_noticias") {
+            try {
+              out = await buscarNoticias(sb, block.input.query, block.input.limite);
+            } catch (e) {
+              out = `Error buscando noticias: ${e.message}`;
+            }
+          } else if (block.name === "solicitar_noticias") {
+            try {
+              out = await solicitarNoticias(sb, block.input.query);
+            } catch (e) {
+              out = `Error encolando noticias: ${e.message}`;
             }
           } else {
             out = "Herramienta desconocida.";
